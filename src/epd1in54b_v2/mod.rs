@@ -17,13 +17,12 @@ pub const WIDTH: u32 = 200;
 pub const HEIGHT: u32 = 200;
 /// Default Background Color (white)
 pub const DEFAULT_BACKGROUND_COLOR: TriColor = TriColor::White;
-const IS_BUSY_LOW: bool = true;
+const IS_BUSY_LOW: bool = false;
 const SINGLE_BYTE_WRITE: bool = true;
 
 use crate::color::TriColor;
 
-pub(crate) mod command;
-use self::command::Command;
+use crate::type_a::command::Command;
 use crate::buffer_len;
 
 /// Full size buffer for use with the 1in54b EPD
@@ -53,9 +52,20 @@ where
 {
     fn init(&mut self, spi: &mut SPI, delay: &mut DELAY) -> Result<(), SPI::Error> {
 
+        #[cfg(feature = "log")]
+        log::debug!("Init Epd1in54b");
+
         self.interface.reset(delay, 10_000, 10_000);
+        #[cfg(feature = "log")]
+        log::debug!("Reset done");
         self.wait_until_idle(spi, delay)?;
+
+        #[cfg(feature = "log")]
+        log::debug!("Wait until idle done");
         self.command(spi, Command::SwReset)?;
+
+        #[cfg(feature = "log")]
+        log::debug!("SwReset done");
         self.wait_until_idle(spi, delay)?;
 
         // 3 Databytes:
@@ -126,7 +136,7 @@ where
 
         self.wait_until_idle(spi, delay)?;
         self.use_full_frame(spi, delay)?;
-        self.cmd_with_data(spi, Command::WriteRamBW, black)?;
+        self.cmd_with_data(spi, Command::WriteRam, black)?;
 
         Ok(())
     }
@@ -139,7 +149,7 @@ where
     ) -> Result<(), SPI::Error> {
         self.wait_until_idle(spi, delay)?;
         self.use_full_frame(spi, delay)?;
-        self.cmd_with_data(spi, Command::WriteRamRed, chromatic)?;
+        self.cmd_with_data(spi, Command::WriteRam2, chromatic)?;
 
         Ok(())
     }
@@ -163,6 +173,9 @@ where
         delay: &mut DELAY,
         delay_us: Option<u32>,
     ) -> Result<Self, SPI::Error> {
+        #[cfg(feature = "log")]
+        log::debug!("Create epd1in54b_v2 instance");
+
         let interface = DisplayInterface::new(busy, dc, rst, delay_us);
         let color = DEFAULT_BACKGROUND_COLOR;
 
@@ -208,7 +221,7 @@ where
     ) -> Result<(), SPI::Error> {
         self.wait_until_idle(spi, delay)?;
         self.use_full_frame(spi, delay)?;
-        self.cmd_with_data(spi, Command::WriteRamBW, buffer)?;
+        self.cmd_with_data(spi, Command::WriteRam, buffer)?;
         Ok(())
     }
 
@@ -259,23 +272,29 @@ where
         let color: u8 = self.background_color().get_byte_value();
 
         if self.background_color() == &TriColor::Chromatic {
+
+            #[cfg(feature = "log")]
+            log::debug!("Clear frame with chromatic color");
             // black and red
-            self.command(spi, Command::WriteRamBW)?;
+            self.command(spi, Command::WriteRam)?;
             self.interface
-                .data_x_times(spi, 0xff, WIDTH / 8 * HEIGHT)?;
+                .data_x_times(spi, 0xff, 2* (WIDTH / 8 * HEIGHT))?;
             // red and white
-            self.command(spi, Command::WriteRamRed)?;
+            self.command(spi, Command::WriteRam2)?;
             self.interface
                 .data_x_times(spi, 0x00, WIDTH / 8 * HEIGHT)?;
         } else {
+            #[cfg(feature = "log")]
+            log::debug!("Clear frame with black and white color");
+
             // black and white
-            self.command(spi, Command::WriteRamBW)?;
+            self.command(spi, Command::WriteRam)?;
             self.interface
                 .data_x_times(spi, color, WIDTH / 8 * HEIGHT)?;
             // red and white
-            self.command(spi, Command::WriteRamRed)?;
+            self.command(spi, Command::WriteRam2)?;
             self.interface
-                .data_x_times(spi, 0xff, WIDTH / 8 * HEIGHT)?;
+                .data_x_times(spi, 0x00, WIDTH / 8 * HEIGHT)?;
         }
 
         Ok(())

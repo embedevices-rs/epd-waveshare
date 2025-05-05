@@ -108,7 +108,7 @@ impl<
     }
 }
 
-/// For use with embedded_grahics
+/// For use with embedded_graphics
 impl<
         const WIDTH: u32,
         const HEIGHT: u32,
