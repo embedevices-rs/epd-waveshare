@@ -31,7 +31,7 @@ pub type Display1in54b = crate::graphics::Display<
     WIDTH,
     HEIGHT,
     false,
-    { buffer_len(WIDTH as usize, HEIGHT as usize) },
+    { buffer_len(WIDTH as usize, 2 * HEIGHT as usize) },
     TriColor,
 >;
 
@@ -272,9 +272,6 @@ where
         let color: u8 = self.background_color().get_byte_value();
 
         if self.background_color() == &TriColor::Chromatic {
-
-            #[cfg(feature = "log")]
-            log::debug!("Clear frame with chromatic color");
             // black and red
             self.command(spi, Command::WriteRam)?;
             self.interface
@@ -284,9 +281,6 @@ where
             self.interface
                 .data_x_times(spi, 0x00, WIDTH / 8 * HEIGHT)?;
         } else {
-            #[cfg(feature = "log")]
-            log::debug!("Clear frame with black and white color");
-
             // black and white
             self.command(spi, Command::WriteRam)?;
             self.interface
