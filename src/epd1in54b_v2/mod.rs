@@ -52,20 +52,12 @@ where
 {
     fn init(&mut self, spi: &mut SPI, delay: &mut DELAY) -> Result<(), SPI::Error> {
 
-        #[cfg(feature = "log")]
-        log::debug!("Init Epd1in54b");
-
         self.interface.reset(delay, 10_000, 10_000);
-        #[cfg(feature = "log")]
-        log::debug!("Reset done");
+
         self.wait_until_idle(spi, delay)?;
 
-        #[cfg(feature = "log")]
-        log::debug!("Wait until idle done");
         self.command(spi, Command::SwReset)?;
 
-        #[cfg(feature = "log")]
-        log::debug!("SwReset done");
         self.wait_until_idle(spi, delay)?;
 
         // 3 Databytes:

@@ -49,7 +49,9 @@ required-features = ["linux-dev"]
 
 [features]
 # Remove the linux-dev feature to build the tests on non  unix systems
-default = ["graphics", "linux-dev", "epd2in13_v3"]
+default = ["graphics", "linux-dev", "epd2in13_v3", "log"]
+
+log = ["dep:log"]
 
 graphics = ["embedded-graphics-core"]
 epd2in13_v2 = []
